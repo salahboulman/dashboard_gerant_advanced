@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_dashboard_masarif_tree" model="ir.ui.view">
+        <field name="name">dashboard.masarif.tree</field>
+        <field name="model">dashboard.masarif</field>
+        <field name="arch" type="xml">
+            <tree string="Masarif">
+                <field name="date"/>
+                <field name="name"/>
+                <field name="amount"/>
+                <field name="user_id"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="action_dashboard_masarif" model="ir.actions.act_window">
+        <field name="name">Masarif (Dépenses)</field>
+        <field name="res_model">dashboard.masarif</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <menuitem id="menu_dashboard_masarif_root" name="Masarif" parent="point_of_sale.menu_point_root" sequence="99" action="action_dashboard_masarif"/>
+</odoo>

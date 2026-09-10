@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="gerant_dashboard_template" name="Dashboard Gerant Mobile">
+        <html>
+            <head>
+                <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+                <title>Espace Gérant</title>
+                <style>
+                    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+                    body { background: #f4f6f9; padding: 12px; color: #2c3e50; }
+                    .header { background: #714B67; color: #fff; padding: 12px; border-radius: 8px; font-weight: bold; font-size: 0.95rem; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+                    .filter-card { background: #fff; padding: 10px; border-radius: 8px; margin-bottom: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
+                    .filter-group { display: flex; gap: 8px; margin-bottom: 8px; }
+                    .filter-group input, .filter-group select { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 6px; font-size: 0.85rem; }
+                    .btn-filter { width: 100%; padding: 8px; background: #2c3e50; color: #fff; border: none; border-radius: 6px; font-weight: bold; }
+                    .kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+                    .kpi-card { background: #fff; padding: 12px; border-radius: 8px; border-left: 4px solid #714B67; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
+                    .kpi-title { font-size: 0.7rem; color: #7f8c8d; text-transform: uppercase; font-weight: bold; }
+                    .kpi-value { font-size: 1.1rem; font-weight: bold; margin-top: 4px; }
+                    .section { background: #fff; border-radius: 8px; padding: 12px; margin-bottom: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
+                    .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 2px solid #f4f6f9; padding-bottom: 6px; }
+                    .section-title { font-size: 0.9rem; font-weight: bold; }
+                    .item-row { display: flex; justify-content: space-between; font-size: 0.8rem; padding: 6px 0; border-bottom: 1px solid #eee; }
+                    .badge-red { color: #e74c3c; font-weight: bold; }
+                    .badge-orange { color: #e67e22; font-weight: bold; }
+                    .form-masarif input { width: 100%; padding: 8px; margin-bottom: 6px; border: 1px solid #ccc; border-radius: 6px; font-size: 0.85rem; }
+                    .btn-add { width: 100%; padding: 10px; background: #27ae60; color: #fff; border: none; border-radius: 6px; font-weight: bold; }
+                    .btn-wa { background: #25D366; color: white; padding: 6px 10px; text-decoration: none; border-radius: 6px; font-size: 0.75rem; font-weight: bold; display: inline-flex; align-items: center; gap: 4px; }
+                </style>
+            </head>
+            <body>
+                <div class="header">
+                    <span>📊 Espace Gérant</span>
+                    <span style="font-size: 0.75rem; opacity: 0.9;"><t t-esc="user_name"/></span>
+                </div>
+
+                <!-- Zone de filtrage -->
+                <div class="filter-card">
+                    <form action="/gerant" method="GET">
+                        <div class="filter-group">
+                            <input type="date" name="date_filter" t-att-value="selected_date"/>
+                            <select name="cashier_id">
+                                <option value="">Tous les caissiers</option>
+                                <t t-foreach="cashiers" t-as="c">
+                                    <option t-att-value="c.id" t-att-selected="c.id == selected_cashier"><t t-esc="c.name"/></option>
+                                </t>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn-filter">🔍 Filtrer / Rechercher</button>
+                    </form>
+                </div>
+
+                <!-- KPIs Financiers -->
+                <div class="kpi-grid">
+                    <div class="kpi-card" style="border-left-color: #2ecc71;">
+                        <div class="kpi-title">CA POS</div>
+                        <div class="kpi-value"><t t-esc="ca_jour"/> <span style="font-size: 0.7rem;">DH</span></div>
+                    </div>
+                    <div class="kpi-card" style="border-left-color: #3498db;">
+                        <div class="kpi-title">Valeur Stock</div>
+                        <div class="kpi-value"><t t-esc="valeur_stock_totale"/> <span style="font-size: 0.7rem;">DH</span></div>
+                    </div>
+                    <div class="kpi-card" style="border-left-color: #e74c3c;">
+                        <div class="kpi-title">Total Masarif</div>
+                        <div class="kpi-value"><t t-esc="total_masarif"/> <span style="font-size: 0.7rem;">DH</span></div>
+                    </div>
+                    <div class="kpi-card" style="border-left-color: #f1c40f;">
+                        <div class="kpi-title">Commandes</div>
+                        <div class="kpi-value"><t t-esc="commandes_count"/></div>
+                    </div>
+                </div>
+
+                <!-- Alertes Stock + Bouton Partager WhatsApp -->
+                <div class="section">
+                    <div class="section-header">
+                        <span class="section-title">⚠️ Alertes Stock</span>
+                        <a t-att-href="whatsapp_stock_url" target="_blank" class="btn-wa">📲 WhatsApp</a>
+                    </div>
+
+                    <div style="font-weight:bold; font-size:0.8rem; margin-top:6px; color:#e74c3c;">Ruptures (≤ 0) :</div>
+                    <t t-if="not stock_less_0"><div style="font-size:0.75rem; color:#7f8c8d;">Aucun article en rupture</div></t>
+                    <t t-foreach="stock_less_0" t-as="s0">
+                        <div class="item-row">
+                            <span><t t-esc="s0['name']"/></span>
+                            <span class="badge-red"><t t-esc="s0['qty']"/> Pcs</span>
+                        </div>
+                    </t>
+
+                    <div style="font-weight:bold; font-size:0.8rem; margin-top:10px; color:#e67e22;">Stock Critique (1 à 20) :</div>
+                    <t t-if="not stock_less_10"><div style="font-size:0.75rem; color:#7f8c8d;">Aucun article en stock critique</div></t>
+                    <t t-foreach="stock_less_10" t-as="s10">
+                        <div class="item-row">
+                            <span><t t-esc="s10['name']"/></span>
+                            <span class="badge-orange"><t t-esc="s10['qty']"/> Pcs</span>
+                        </div>
+                    </t>
+                </div>
+
+                <!-- Section Masarif + Bouton Partager WhatsApp -->
+                <div class="section">
+                    <div class="section-header">
+                        <span class="section-title">💸 Masarif (Dépenses)</span>
+                        <a t-att-href="whatsapp_masarif_url" target="_blank" class="btn-wa">📲 WhatsApp</a>
+                    </div>
+
+                    <form action="/gerant/add_masarif" method="POST" class="form-masarif" style="margin-top:8px;">
+                        <input type="text" name="name" placeholder="Motif (ex: Achat fournitures)" required="required"/>
+                        <input type="number" step="0.01" name="amount" placeholder="Montant DH" required="required"/>
+                        <button type="submit" class="btn-add">+ Enregistrer Dépense</button>
+                    </form>
+
+                    <div style="margin-top: 12px;">
+                        <div style="font-weight:bold; font-size:0.8rem; margin-bottom:4px;">Dépenses de la journée :</div>
+                        <t t-foreach="masarif_records" t-as="m">
+                            <div class="item-row">
+                                <span><t t-esc="m.name"/></span>
+                                <span style="font-weight:bold;"><t t-esc="m.amount"/> DH</span>
+                            </div>
+                        </t>
+                    </div>
+                </div>
+
+            </body>
+        </html>
+    </template>
+</odoo>
